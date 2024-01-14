@@ -50,17 +50,55 @@ class Company {
    * */
 
   static async findAll(filters = {noFilter: true}) {
-    if (filters['noFilter'] === true){
-      const companiesRes = await db.query(
-        `SELECT handle,
-                name,
-                description,
-                num_employees AS "numEmployees",
-                logo_url AS "logoUrl"
-         FROM companies
-         ORDER BY name`);
-      return companiesRes.rows;
+    const { name, minEmployees, maxEmployees } = filters;
+
+    // Validate that the request does not contain inappropriate filtering fields
+    const allowedFilters = ['name', 'minEmployees', 'maxEmployees', 'noFilter'];
+    const invalidFilters = Object.keys(filters).filter(filter => !allowedFilters.includes(filter));
+    if (invalidFilters.length > 0) {
+        throw new Error(`Invalid filters: ${invalidFilters.join(', ')}`);
     }
+
+    // Validate minEmployees and maxEmployees
+    if (minEmployees && maxEmployees && parseInt(minEmployees) > parseInt(maxEmployees)) {
+        throw new Error('minEmployees should not be greater than maxEmployees');
+    }
+
+    // Build the SQL query based on the provided filters
+    let query = `SELECT handle,
+                        name,
+                        description,
+                        num_employees AS "numEmployees",
+                        logo_url AS "logoUrl"
+                 FROM companies`;
+
+    const whereClauses = [];
+    const values = [];
+
+    if (name) {
+        whereClauses.push(`LOWER(name) LIKE LOWER($${values.length + 1})`);
+        values.push(`%${name}%`);
+    }
+
+    if (minEmployees) {
+        whereClauses.push(`num_employees >= $${values.length + 1}`);
+        values.push(minEmployees);
+    }
+
+    if (maxEmployees) {
+        whereClauses.push(`num_employees <= $${values.length + 1}`);
+        values.push(maxEmployees);
+    }
+
+    if (whereClauses.length > 0) {
+        query += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+    query += ` ORDER BY name`;
+
+    // Execute the query with the specified filters
+    const companiesRes = await db.query(query, values);
+    return companiesRes.rows;
   }
 
   /** Given a company handle, return data about company.

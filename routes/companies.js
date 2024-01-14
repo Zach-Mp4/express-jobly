@@ -55,15 +55,11 @@ router.get("/", async function (req, res, next) {
     let filters = req.body.filters;
     if (filters){
       const companies = await Company.findAll(filters = filters);
-      return res.json({ 
-        filtered: true,
-        companies });
+      return res.json({ companies });
     }
     else{
       const companies = await Company.findAll();
-      return res.json({
-        filtered: false,
-        companies });
+      return res.json({ companies });
     }
   } catch (err) {
     return next(err);

@@ -66,6 +66,19 @@ describe("POST /companies", function () {
 /************************************** GET /companies */
 
 describe("GET /companies", function () {
+
+  test("maxEmployees filter", async function () {
+    const resp = await request(app).get("/companies")
+    .send({
+      "filters": {
+        "maxEmployees": 15
+      }
+    });
+    for (let company of resp.body.companies){
+      expect(company.numEmployees).toBeLessThan(15);
+    }
+  });
+
   test("ok for anon", async function () {
     const resp = await request(app).get("/companies");
     expect(resp.body).toEqual({
@@ -106,6 +119,38 @@ describe("GET /companies", function () {
         .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(500);
   });
+
+  test("name filter", async function () {
+    const resp = await request(app).get("/companies")
+    .send({ "filters": {
+      name: "anderson"
+    }});
+    expect(resp.body).toEqual({
+      "companies": [
+        {
+          "handle": "anderson-arias-morrow",
+          "name": "Anderson, Arias and Morrow",
+          "description": "Somebody program how I. Face give away discussion view act inside. Your official relationship administration here.",
+          "numEmployees": 245,
+          "logoUrl": "/logos/logo3.png"
+        }
+      ],
+      "companies": []
+    });
+  });
+
+  test("minEmployees filter", async function () {
+    const resp = await request(app).get("/companies")
+    .send({ "filters": {
+      "minEmployees": 950
+    }});
+
+    for (let company of resp.body.companies){
+      expect(company.numEmployees).toBeGreaterThan(950);
+    }
+  });
+
+  
 });
 
 /************************************** GET /companies/:handle */

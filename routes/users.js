@@ -5,7 +5,7 @@
 const jsonschema = require("jsonschema");
 
 const express = require("express");
-const { ensureLoggedIn } = require("../middleware/auth");
+const { ensureLoggedIn, ensureAdminLoggedIn } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
@@ -27,7 +27,7 @@ const router = express.Router();
  * Authorization required: login
  **/
 
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+router.post("/", ensureAdminLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
@@ -51,7 +51,7 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  * Authorization required: login
  **/
 
-router.get("/", ensureLoggedIn, async function (req, res, next) {
+router.get("/", ensureAdminLoggedIn, async function (req, res, next) {
   try {
     const users = await User.findAll();
     return res.json({ users });
@@ -70,8 +70,10 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
 
 router.get("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    const user = await User.get(req.params.username);
-    return res.json({ user });
+    if (res.locals.user.isAdmin || res.locals.user.username === req.params.username){
+      const user = await User.get(req.params.username);
+      return res.json({ user });
+    }
   } catch (err) {
     return next(err);
   }
@@ -91,13 +93,15 @@ router.get("/:username", ensureLoggedIn, async function (req, res, next) {
 router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userUpdateSchema);
-    if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
-      throw new BadRequestError(errs);
+    if (res.locals.user.isAdmin || res.locals.user.username === req.params.username){
+      if (!validator.valid) {
+        const errs = validator.errors.map(e => e.stack);
+        throw new BadRequestError(errs);
+      }
+  
+      const user = await User.update(req.params.username, req.body);
+      return res.json({ user });
     }
-
-    const user = await User.update(req.params.username, req.body);
-    return res.json({ user });
   } catch (err) {
     return next(err);
   }
@@ -111,8 +115,10 @@ router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
 
 router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    await User.remove(req.params.username);
-    return res.json({ deleted: req.params.username });
+    if (res.locals.user.isAdmin || res.locals.user.username === req.params.username){
+      await User.remove(req.params.username);
+      return res.json({ deleted: req.params.username });
+    }
   } catch (err) {
     return next(err);
   }

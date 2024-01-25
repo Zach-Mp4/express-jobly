@@ -11,7 +11,7 @@ class Job {
    *
    * data should be { title, salary, equity, company_handle }
    *
-   * Returns { title, salary, equity, company_handle }
+   * Returns { title, salary, equity, companyHandle }
    *
    * */
 
@@ -19,19 +19,18 @@ class Job {
 
     const result = await db.query(
           `INSERT INTO jobs
-           (title, name, salary, equity, company_handle)
-           VALUES ($1, $2, $3, $4, $5)
-           RETURNING title, salary, equity, company_handle AS "companyHandle"`,
+           (title, salary, equity, company_handle)
+           VALUES ($1, $2, $3, $4)
+           RETURNING "title", "salary", "equity", "company_handle" AS "companyHandle"`,
         [
           title,
-          name,
           salary,
           equity,
-          companyHandle,
+          companyHandle
         ],
     );
     const job = result.rows[0];
-
+  
     return job;
   }
 
@@ -74,7 +73,7 @@ class Job {
         query += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
-    query += ` ORDER BY name`;
+    query += ` ORDER BY title`;
 
     // Execute the query with the specified filters
     const jobsRes = await db.query(query, values);
@@ -117,19 +116,14 @@ class Job {
    * Throws NotFoundError if not found.
    */
 
-  static async update(handle, data) {
-    const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {
-          companyHandle: "company_handle",
-        });
-    const handleVarIdx = "$" + (values.length + 1);
+  static async update(id, data) {
+    const { salary, equity } = data;
 
     const querySql = `UPDATE jobs 
-                      SET ${setCols} 
-                      WHERE handle = ${handleVarIdx} 
+                      SET salary = $1, equity = $2
+                      WHERE id = $3
                       RETURNING title, salary, equity, company_handle AS "companyHandle"`;
-    const result = await db.query(querySql, [...values, handle]);
+    const result = await db.query(querySql, [salary, equity, id]);
     const job = result.rows[0];
 
     if (!job) throw new NotFoundError(`No job: ${id}`);

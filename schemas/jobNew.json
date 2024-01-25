@@ -1,0 +1,52 @@
+{
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "default": {},
+    "title": "Root Schema",
+    "required": [
+        "title",
+        "salary",
+        "equity",
+        "companyHandle"
+    ],
+    "properties": {
+        "title": {
+            "type": "string",
+            "default": "",
+            "title": "The title Schema",
+            "examples": [
+                "cook"
+            ]
+        },
+        "salary": {
+            "type": "integer",
+            "default": 0,
+            "title": "The salary Schema",
+            "examples": [
+                10000
+            ]
+        },
+        "equity": {
+            "type": "integer",
+            "default": 0,
+            "title": "The equity Schema",
+            "examples": [
+                0
+            ]
+        },
+        "companyHandle": {
+            "type": "string",
+            "default": "",
+            "title": "The companyHandle Schema",
+            "examples": [
+                "watson-davis"
+            ]
+        }
+    },
+    "examples": [{
+        "title": "cook",
+        "salary": 10000,
+        "equity": 0,
+        "companyHandle": "watson-davis"
+    }]
+}

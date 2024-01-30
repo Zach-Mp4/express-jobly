@@ -3,7 +3,7 @@
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
-
+const Job = require("../models/job");
 /** Related functions for companies. */
 
 class Company {
@@ -179,6 +179,18 @@ class Company {
     const company = result.rows[0];
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
+  }
+
+  static async findJobs(handle){
+    const result = await db.query(
+      `SELECT id, title, salary, equity 
+      FROM jobs
+      WHERE company_handle = $1`,
+      [handle]
+    );
+    if (!result.rows) throw new NotFoundError('NOT FOUND');
+
+    return result.rows;
   }
 }
 

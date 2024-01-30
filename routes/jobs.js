@@ -8,7 +8,7 @@ const express = require("express");
 const { BadRequestError } = require("../expressError");
 const { ensureLoggedIn, ensureAdminLoggedIn} = require("../middleware/auth");
 const Job = require("../models/job");
-
+const User = require("../models/user");
 const jobNewSchema = require("../schemas/jobNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
 const jobUpdateSchema = require("../schemas/jobUpdate.json");
@@ -119,6 +119,16 @@ router.delete("/:id", ensureAdminLoggedIn, async function (req, res, next) {
   try {
     await Job.remove(req.params.id);
     return res.json({ deleted: req.params.id });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post("/:id", async function (req, res, next) {
+  try {
+    const {username, jobId} = req.params;
+    User.apply(username, jobId);
+    return {applied: jobId};
   } catch (err) {
     return next(err);
   }

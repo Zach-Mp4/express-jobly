@@ -139,6 +139,13 @@ class User {
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
 
+    const jobs = await db.query(`SELECT *
+    FROM jobs
+    JOIN applications ON jobs.job_id = applications.job_id
+    WHERE applications.username = $1`, [username]);
+
+    user.jobs = jobs.rows;
+
     return user;
   }
 
@@ -207,11 +214,12 @@ class User {
 
   static async apply(username, id){
     const result = await db.query(
-      `INSERT INTO applications
-      (username, job_id)
-      VALUES ($1, $2)`,
-      [username, id]
+        `INSERT INTO applications
+        (username, job_id)
+        VALUES ($1, $2)`,
+        [username, id]
     );
+    return;
   }
 }
 
